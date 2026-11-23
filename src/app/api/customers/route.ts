@@ -4,7 +4,7 @@ import { formatCustomer } from '@/server/invoices/format';
 
 export async function GET() {
   try {
-    const customers = await prisma.invoiceCustomer.findMany({
+    const customers = await prisma.customer.findMany({
       orderBy: { name: 'asc' },
     });
     return NextResponse.json(customers.map(formatCustomer));
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email ? email.trim() : null;
     const cleanAddress = address.trim();
 
-    const customer = await prisma.invoiceCustomer.upsert({
+    const customer = await prisma.customer.upsert({
       where: { phone: cleanPhone },
       update: {
         name: cleanName,

@@ -12,8 +12,7 @@ export async function GET(
     if (isNaN(numId)) return errorResponse('Invalid service ID', 400);
 
     const packages = await prisma.package.findMany({
-      where: { serviceId: numId, deletedAt: null },
-      include: { vendor: true },
+      where: { serviceId: numId },
     });
 
     return jsonResponse(packages, 'Packages fetched successfully');

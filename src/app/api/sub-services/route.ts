@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, serviceId, nestedServiceId, price, unit } = body;
+    const { name, serviceId, nestedServiceId, price, isContactForPrice, description, image1, image2, faq } = body;
     if (!name) return errorResponse('Name is required', 400);
 
     const sub = await prisma.subService.create({
@@ -25,7 +25,11 @@ export async function POST(req: NextRequest) {
         serviceId: serviceId ? parseInt(serviceId, 10) : null,
         nestedServiceId: nestedServiceId ? parseInt(nestedServiceId, 10) : null,
         price: price ? parseFloat(price) : 0,
-        unit: unit || null,
+        isContactForPrice: Boolean(isContactForPrice),
+        description: description || null,
+        image1: image1 || null,
+        image2: image2 || null,
+        faq: faq || null,
       },
     });
 

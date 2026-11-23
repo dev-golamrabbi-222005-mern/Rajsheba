@@ -10,7 +10,7 @@ export async function DELETE(
     const numId = parseInt(id, 10);
     if (isNaN(numId)) return NextResponse.json({ message: 'Invalid customer ID' }, { status: 400 });
 
-    await prisma.invoiceCustomer.delete({ where: { id: numId } });
+    await prisma.customer.delete({ where: { id: numId } });
     return NextResponse.json({ message: 'Customer deleted successfully' });
   } catch (error: any) {
     return NextResponse.json({ message: error.message || 'Failed to delete customer' }, { status: 500 });

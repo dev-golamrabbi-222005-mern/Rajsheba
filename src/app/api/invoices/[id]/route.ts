@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { formatInvoice } from '@/server/invoices/format';
+import { numberToWords } from '@/utils/numberToWords';
 
 export async function GET(
   req: NextRequest,
@@ -40,9 +41,10 @@ export async function PUT(
     if (updateFields.templateName) data.templateName = updateFields.templateName;
     if (updateFields.signeeName) data.signeeName = updateFields.signeeName;
     if (updateFields.signeeRole) data.signeeRole = updateFields.signeeRole;
-    if (updateFields.notes !== undefined) data.notes = updateFields.notes;
-    if (updateFields.totalAmount !== undefined) data.totalAmount = Number(updateFields.totalAmount);
-    if (updateFields.totalPayableAmount !== undefined) data.totalPayableAmount = Number(updateFields.totalPayableAmount);
+    if (updateFields.totalPayableAmount !== undefined) {
+      data.totalPayableAmount = Number(updateFields.totalPayableAmount);
+      data.amountInWords = numberToWords(data.totalPayableAmount);
+    }
     if (updateFields.paidAmount !== undefined) data.paidAmount = Number(updateFields.paidAmount);
     if (updateFields.dueAmount !== undefined) {
       data.dueAmount = Number(updateFields.dueAmount);

@@ -12,7 +12,7 @@ export async function GET(
     if (isNaN(numServiceId)) return errorResponse('Invalid service ID', 400);
 
     const nestedServices = await prisma.nestedService.findMany({
-      where: { serviceId: numServiceId, deletedAt: null },
+      where: { serviceId: numServiceId },
       include: { subServices: true },
     });
 

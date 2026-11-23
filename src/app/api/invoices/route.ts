@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { formatInvoice } from '@/server/invoices/format';
+import { numberToWords } from '@/utils/numberToWords';
 
 export async function GET() {
   try {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     const cleanCustomerAddress = customer.address.trim();
 
     // Upsert customer by phone
-    const dbCustomer = await prisma.invoiceCustomer.upsert({
+    const dbCustomer = await prisma.customer.upsert({
       where: { phone: cleanPhone },
       update: {
         name: cleanCustomerName,
@@ -85,12 +86,12 @@ export async function POST(req: NextRequest) {
         templateName,
         signeeName,
         signeeRole,
+        amountInWords: numberToWords(numPayable),
         accountName: paymentOptions?.accountName || null,
         accountNumber: paymentOptions?.accountNumber || null,
         bankName: paymentOptions?.bankName || null,
         branch: paymentOptions?.branch || null,
         routingNumber: paymentOptions?.routingNumber || null,
-        notes: notes || null,
         status: 'active',
         items: {
           create: items.map((item: any) => ({

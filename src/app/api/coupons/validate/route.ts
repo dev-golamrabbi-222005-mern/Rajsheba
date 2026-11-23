@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
       return errorResponse('Coupon usage limit reached', 400);
     }
-    if (orderAmount < coupon.minOrderAmount) {
+    if (coupon.minOrderAmount !== null && coupon.minOrderAmount !== undefined && orderAmount < coupon.minOrderAmount) {
       return errorResponse(`Minimum order amount of ${coupon.minOrderAmount} required`, 400);
     }
 

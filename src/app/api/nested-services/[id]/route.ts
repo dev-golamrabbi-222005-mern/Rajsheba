@@ -53,9 +53,8 @@ export async function DELETE(
     const numId = parseInt(id, 10);
     if (isNaN(numId)) return errorResponse('Invalid ID', 400);
 
-    await prisma.nestedService.update({
+    await prisma.nestedService.delete({
       where: { id: numId },
-      data: { deletedAt: new Date() },
     });
 
     return jsonResponse({ id: numId }, 'Deleted successfully');

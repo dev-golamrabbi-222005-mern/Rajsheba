@@ -5,8 +5,7 @@ import { jsonResponse, errorResponse } from '@/server/response';
 export async function GET() {
   try {
     const packages = await prisma.package.findMany({
-      where: { deletedAt: null },
-      include: { service: true, vendor: true },
+      include: { service: true },
       orderBy: { createdAt: 'desc' },
     });
     return jsonResponse(packages, 'Public packages fetched successfully');

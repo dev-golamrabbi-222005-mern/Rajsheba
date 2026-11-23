@@ -13,7 +13,7 @@ export async function GET(
 
     const pkg = await prisma.package.findUnique({
       where: { id: numId },
-      include: { service: true, vendor: true },
+      include: { service: true },
     });
 
     if (!pkg) return errorResponse('Not found', 404);
@@ -53,9 +53,8 @@ export async function DELETE(
     const numId = parseInt(id, 10);
     if (isNaN(numId)) return errorResponse('Invalid ID', 400);
 
-    await prisma.package.update({
+    await prisma.package.delete({
       where: { id: numId },
-      data: { deletedAt: new Date() },
     });
 
     return jsonResponse({ id: numId }, 'Deleted successfully');

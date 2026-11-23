@@ -5,8 +5,7 @@ import { jsonResponse, errorResponse } from '@/server/response';
 export async function GET() {
   try {
     const packages = await prisma.package.findMany({
-      where: { deletedAt: null },
-      include: { service: true, vendor: true },
+      include: { service: true },
       orderBy: { createdAt: 'desc' },
     });
     return jsonResponse(packages, 'Packages fetched successfully');
@@ -18,18 +17,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, description, price, discountedPrice, features, serviceId, vendorId } = body;
-    if (!title) return errorResponse('Title is required', 400);
+    const { name, title, description, price, features, serviceId, service_id, image } = body;
+    const pkgName = name || title;
+    const sId = serviceId || service_id;
+
+    if (!pkgName || !sId) return errorResponse('Name and serviceId are required', 400);
 
     const pkg = await prisma.package.create({
       data: {
-        title,
+        name: pkgName,
         description: description || null,
         price: price ? parseFloat(price) : 0,
-        discountedPrice: discountedPrice ? parseFloat(discountedPrice) : null,
         features: features || [],
-        serviceId: serviceId ? parseInt(serviceId, 10) : null,
-        vendorId: vendorId ? parseInt(vendorId, 10) : null,
+        serviceId: parseInt(sId, 10),
+        image: image || null,
       },
     });
 
