@@ -7,9 +7,7 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-
-
-// Connect to Database
+// Connect to Database (NeonDB PostgreSQL via Prisma)
 connectDB();
 
 const app = express();
@@ -18,15 +16,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 // Basic Root Route
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Rajseba Invoices API' });
+  res.json({ message: 'Welcome to Rajseba Invoices API (NeonDB PostgreSQL)' });
 });
 
-// Basic Health Check Route
+// Health Check Route
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Invoice API is running smoothly' });
+  res.json({
+    status: 'ok',
+    message: 'Invoice API is running smoothly',
+    database: process.env.USE_JSON_DB === 'true' ? 'local-fallback' : 'neondb-postgresql',
+  });
 });
 
 // Routes
@@ -53,7 +58,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.error(`Unhandled Rejection Error: ${err.message}`);
-  // We do not exit the process here to prevent crashes from background tasks like Mongoose index builds
 });
 
 module.exports = app;

@@ -1,28 +1,28 @@
-const mongoose = require('mongoose');
+const prisma = require('./prisma');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const connectDB = async () => {
-  if (process.env.USE_JSON_DB === 'true') {
-    console.log('Using JSON DB (Skipping MongoDB Connection)');
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('npg_password')) {
+    console.log('\n================================================================');
+    console.log('⚡ NeonDB PostgreSQL: DATABASE_URL not yet configured with live credentials.');
+    console.log('📁 Using local fallback storage mode for zero-interruption development.');
+    console.log('🔗 Set your live NeonDB connection string in apps/invoices-api/.env');
+    console.log('================================================================\n');
+    process.env.USE_JSON_DB = 'true';
     return;
   }
 
   try {
-    const uri = 'mongodb+srv://invoice:rtGDlW4UgJRrvQY8@invoice.borcxr6.mongodb.net/?appName=invoice';
-
-    // Set a timeout of 5 seconds for connection attempt to allow for Vercel cold starts
-    const conn = await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000
-    });
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    await prisma.$connect();
+    console.log('✅ Connected to NeonDB PostgreSQL database successfully.');
     process.env.USE_JSON_DB = 'false';
   } catch (error) {
     console.log('\n================================================================');
-    console.log('⚠️  LOCAL MONGODB NOT DETECTED ON THIS SYSTEM.');
-    console.log('⚡ FALLING BACK TO HIGHER-PERFORMANCE LOCAL JSON FILESYSTEM DB!');
-    console.log('📂 Data is securely persisted inside: backend/data/db.json');
+    console.log('⚠️ Could not connect to NeonDB PostgreSQL instance: ' + error.message);
+    console.log('📁 Falling back to local storage mode.');
     console.log('================================================================\n');
-
     process.env.USE_JSON_DB = 'true';
   }
 };
