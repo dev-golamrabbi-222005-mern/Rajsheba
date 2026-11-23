@@ -91,6 +91,7 @@ export function Sidebar({ open, onClose }: { open?: boolean; onClose?: () => voi
 
     switch (userRole) {
       case "superadmin":
+      case "admin":
         return [
           homeItem,
           { label: lang === "bn" ? "ওভারভিউ" : "Overview", icon: LayoutGrid, href: "/dashbord" },
