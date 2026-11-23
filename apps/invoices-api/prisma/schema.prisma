@@ -17,7 +17,7 @@ model Customer {
   updatedAt DateTime  @updatedAt
   invoices  Invoice[]
 
-  @@map("customers")
+  @@map("invoice_customers")
 }
 
 model Service {
@@ -27,7 +27,7 @@ model Service {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("services")
+  @@map("invoice_services")
 }
 
 model Invoice {
