@@ -1,0 +1,65 @@
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { jsonResponse, errorResponse } from '@/server/response';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) return errorResponse('Invalid ID', 400);
+
+    const nested = await prisma.nestedService.findUnique({
+      where: { id: numId },
+      include: { service: true, subServices: true },
+    });
+
+    if (!nested) return errorResponse('Not found', 404);
+    return jsonResponse(nested);
+  } catch (error: any) {
+    return errorResponse(error.message || 'Error', 500);
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) return errorResponse('Invalid ID', 400);
+
+    const body = await req.json();
+    const updated = await prisma.nestedService.update({
+      where: { id: numId },
+      data: body,
+    });
+
+    return jsonResponse(updated, 'Updated successfully');
+  } catch (error: any) {
+    return errorResponse(error.message || 'Error', 500);
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const numId = parseInt(id, 10);
+    if (isNaN(numId)) return errorResponse('Invalid ID', 400);
+
+    await prisma.nestedService.update({
+      where: { id: numId },
+      data: { deletedAt: new Date() },
+    });
+
+    return jsonResponse({ id: numId }, 'Deleted successfully');
+  } catch (error: any) {
+    return errorResponse(error.message || 'Error', 500);
+  }
+}

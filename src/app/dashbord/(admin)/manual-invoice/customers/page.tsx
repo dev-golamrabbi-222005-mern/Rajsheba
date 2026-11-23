@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Plus, Search, Trash2, Users, AlertTriangle, Lock, User, Check } from "lucide-react";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://www.rajapi.jevxo.com";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Customer {
   id: number | null;
@@ -47,9 +47,9 @@ export default function CustomersPage() {
     try {
       setLoading(true);
       const [ur, ir, rr] = await Promise.all([
-        fetch(`${API}/users`, { headers: authHeader() }),
+        fetch(`${API}/api/users`, { headers: authHeader() }),
         fetch(`${API}/api/manual-invoices`, { headers: authHeader() }),
-        fetch(`${API}/roles`, { headers: authHeader() }),
+        fetch(`${API}/api/roles`, { headers: authHeader() }),
       ]);
       if (!ur.ok) throw new Error("Failed to load customers");
       const uData = await ur.json();
@@ -144,7 +144,7 @@ export default function CustomersPage() {
       }
 
       // 1. Create User
-      const userRes = await fetch(`${API}/users`, {
+      const userRes = await fetch(`${API}/api/users`, {
         method: "POST",
         headers: authHeader(),
         body: JSON.stringify({ name, phone, email, roleId: clientRoleId }),
@@ -158,7 +158,7 @@ export default function CustomersPage() {
 
       // 2. Create User Profile with location
       if (userId && address) {
-        const profileRes = await fetch(`${API}/profiles`, {
+        const profileRes = await fetch(`${API}/api/profiles`, {
           method: "POST",
           headers: authHeader(),
           body: JSON.stringify({ user_id: userId, type: "personal", location: address }),
@@ -184,7 +184,7 @@ export default function CustomersPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`${API}/users/${id}`, { method: "DELETE", headers: authHeader() });
+      const res = await fetch(`${API}/api/users/${id}`, { method: "DELETE", headers: authHeader() });
       if (!res.ok) throw new Error("Failed to delete client");
       setCustomers(prev => prev.filter(c => c.id !== id));
       setSuccess("Client deleted successfully!");

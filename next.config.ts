@@ -63,6 +63,19 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  async rewrites() {
+    return [
+      {
+        source: "/api/manual-invoices/:path*",
+        destination: "/api/invoices/:path*",
+      },
+      {
+        source: "/api/manual-services/:path*",
+        destination: "/api/invoice-services/:path*",
+      },
+    ];
+  },
+
   turbopack: {
     resolveAlias: {
       html2canvas: "./src/utils/html2canvas-wrapper.js",

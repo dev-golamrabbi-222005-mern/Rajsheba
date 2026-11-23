@@ -6,7 +6,7 @@ import { ArrowLeft, User, FileText, Palette, Package, Plus, Trash2, Check, Alert
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/select";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://www.rajapi.jevxo.com";
+const API = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Customer { id: number; name: string; phone: string; email?: string; address?: string; profile?: { location?: string }; }
 interface ServiceItem { id: number; name: string; rate: number; }
@@ -77,9 +77,9 @@ export default function CreateInvoicePage() {
       try {
         setInitialLoading(true);
         const [cr, sr, rr] = await Promise.all([
-          fetch(`${API}/users`, { headers: authHeader() }),
+          fetch(`${API}/api/users`, { headers: authHeader() }),
           fetch(`${API}/api/manual-services`, { headers: authHeader() }),
-          fetch(`${API}/roles`, { headers: authHeader() }),
+          fetch(`${API}/api/roles`, { headers: authHeader() }),
         ]);
         const uData = await cr.json();
         setCustomers(uData?.data || (Array.isArray(uData) ? uData : []));
@@ -191,7 +191,7 @@ export default function CreateInvoicePage() {
           roleId: clientRoleId,
         };
 
-        const createRes = await fetch(`${API}/users`, {
+        const createRes = await fetch(`${API}/api/users`, {
           method: "POST",
           headers: authHeader(),
           body: JSON.stringify(userPayload),
@@ -211,7 +211,7 @@ export default function CreateInvoicePage() {
             type: "personal",
             location: finalCustAddress,
           };
-          await fetch(`${API}/profiles`, {
+          await fetch(`${API}/api/profiles`, {
             method: "POST",
             headers: authHeader(),
             body: JSON.stringify(profilePayload),
