@@ -1,0 +1,452 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // superadmin, admin, agent, vendor, client, employee
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@map("roles")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String?   @unique
+  phoneNumber     String?   @unique
+  password        String
+  roleId          Int?
+  role            Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleName        String    @default("client") // fallback: superadmin, admin, agent, vendor, client, employee
+  avatar          String?
+  status          String    @default("active") // active, inactive, banned
+  address         String?
+  nid             String?
+  tradeLicense    String?
+  commissionRate  Float?    @default(0)
+  balance         Float?    @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  vendorServices   Service[]      @relation("VendorServices")
+  clientBookings   Booking[]      @relation("ClientBookings")
+  vendorBookings   Booking[]      @relation("VendorBookings")
+  agentBookings    Booking[]      @relation("AgentBookings")
+  reviews          Review[]
+  sentMessages     ChatMessage[]  @relation("SentMessages")
+  receivedMessages ChatMessage[]  @relation("ReceivedMessages")
+  withdraws        Withdraw[]
+
+  @@map("users")
+}
+
+model Otp {
+  id         Int      @id @default(autoincrement())
+  phone      String
+  otpCode    String
+  expiresAt  DateTime
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("otps")
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String
+  slug        String?    @unique
+  description String?
+  icon        String?
+  order       Int        @default(0)
+  parentId    Int?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryHierarchy")
+  services    Service[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+
+  @@map("categories")
+}
+
+model Service {
+  id                          Int             @id @default(autoincrement())
+  name                        String
+  slug                        String          @unique
+  subtitle                    String?
+  description                 String?
+  overview                    String?
+  details                     String?
+  faq                         Json?           // [{ question, answer }]
+  image                       String?
+  banner                      String?
+  categoryId                  Int?
+  category                    Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  vendorId                    Int?
+  vendor                      User?           @relation("VendorServices", fields: [vendorId], references: [id], onDelete: SetNull)
+  agentCommissionPercentage   Float?          @default(0)
+  nestedServices              NestedService[]
+  subServices                 SubService[]
+  packages                    Package[]
+  bookings                    Booking[]
+  reviews                     Review[]
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+  deletedAt                   DateTime?
+
+  @@map("services")
+}
+
+model NestedService {
+  id          Int          @id @default(autoincrement())
+  serviceId   Int
+  service     Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  subServices SubService[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("nested_services")
+}
+
+model SubService {
+  id                 Int            @id @default(autoincrement())
+  serviceId          Int?
+  service            Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  nestedServiceId    Int?
+  nestedService      NestedService? @relation(fields: [nestedServiceId], references: [id], onDelete: SetNull)
+  name               String
+  price              Float          @default(0)
+  isContactForPrice  Boolean        @default(false)
+  description        String?
+  image1             String?
+  image2             String?
+  faq                Json?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@map("sub_services")
+}
+
+model Package {
+  id          Int       @id @default(autoincrement())
+  serviceId   Int
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name        String
+  price       Float
+  features    Json?     // string[]
+  description String?
+  image       String?
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("packages")
+}
+
+model Booking {
+  id              Int        @id @default(autoincrement())
+  bookingCode     String?    @unique
+  userId          Int?
+  user            User?      @relation("ClientBookings", fields: [userId], references: [id], onDelete: SetNull)
+  vendorId        Int?
+  vendor          User?      @relation("VendorBookings", fields: [vendorId], references: [id], onDelete: SetNull)
+  agentId         Int?
+  agent           User?      @relation("AgentBookings", fields: [agentId], references: [id], onDelete: SetNull)
+  serviceId       Int?
+  service         Service?   @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  packageId       Int?
+  package         Package?   @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  quantity        Int        @default(1)
+  subtotal        Float      @default(0)
+  discountAmount  Float      @default(0)
+  couponCode      String?
+  totalPrice      Float      @default(0)
+  date            DateTime
+  time            String?
+  location        String
+  notes           String?
+  status          String     @default("pending") // pending, assigned, on_the_way, completed, cancelled
+  paymentStatus   String     @default("unpaid") // unpaid, paid, partial
+  assignedAt      DateTime?
+  onTheWayAt      DateTime?
+  completedAt     DateTime?
+  subServiceItems Json?      // [{ sub_service_id, quantity }]
+  withdraws       Withdraw[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@map("bookings")
+}
+
+model Coupon {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  description     String?
+  discountType    String    @default("percentage") // percentage, fixed
+  discountValue   Float
+  maxDiscount     Float?
+  minOrderAmount  Float?    @default(0)
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  isActive        Boolean   @default(true)
+  applicableTo    String    @default("all") // all, service, package
+  serviceId       Int?
+  packageId       Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("coupons")
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId Int
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  rating    Float    @default(5)
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId Int
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model Withdraw {
+  id          Int       @id @default(autoincrement())
+  amount      Float
+  status      String    @default("pending") // pending, approved, rejected
+  adminNote   String?
+  vendorId    Int
+  vendor      User      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  bookingId   Int?
+  booking     Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  gatewayType String?   @default("bKash")
+  gatewayInfo Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("withdraws")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  title     String
+  message   String
+  type      String?  @default("info")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model CompanyBranding {
+  id                Int      @id @default(1)
+  companyName       String   @default("Rajseba")
+  logoUrl           String?  @default("/rajshiblogo.png")
+  footerLogoUrl     String?  @default("/logo.png")
+  email             String?  @default("contact@rajseba.com")
+  phone             String?  @default("01813-333373")
+  address           String?  @default("Rajshahi Corporate Office, Ghoramara, Rajshahi")
+  cityLocation      String?  @default("Rajshahi")
+  facebookUrl       String?
+  instagramUrl      String?
+  twitterUrl        String?
+  linkedinUrl       String?
+  youtubeUrl        String?
+  whatsappNumber    String?
+  metaTitle         String?  @default("Rajseba - Home & Commercial Services")
+  metaDescription   String?
+  footerDescription String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("company_branding")
+}
+
+model Hero {
+  id        Int       @id @default(autoincrement())
+  images    String[]
+  text      String?
+  subtext   String?
+  link      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("heroes")
+}
+
+model Blog {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String?   @unique
+  description String
+  overview    String?
+  images      String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("blogs")
+}
+
+model Devision {
+  id         Int        @id @default(autoincrement())
+  name       String
+  banglaName String?
+  code       String?
+  longitude  String?
+  latitude   String?
+  districts  District[]
+
+  @@map("devisions")
+}
+
+model District {
+  id         Int      @id @default(autoincrement())
+  name       String
+  banglaName String?
+  code       String?
+  longitude  String?
+  latitude   String?
+  devisionId Int?
+  devision   Devision? @relation(fields: [devisionId], references: [id], onDelete: SetNull)
+  areas      Area[]
+
+  @@map("districts")
+}
+
+model Area {
+  id         Int       @id @default(autoincrement())
+  name       String
+  banglaName String?
+  code       String?
+  longitude  String?
+  latitude   String?
+  districtId Int?
+  district   District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+
+  @@map("areas")
+}
+
+model CustomShifting {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String
+  email       String?
+  fromAddress String
+  toAddress   String
+  floorFrom   String?
+  floorTo     String?
+  hasLiftFrom Boolean  @default(false)
+  hasLiftTo   Boolean  @default(false)
+  itemDetails String?
+  shiftingDate DateTime
+  status      String   @default("pending") // pending, reviewed, contact_made, closed
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("custom_shiftings")
+}
+
+// Invoices Models
+model Customer {
+  id        Int       @id @default(autoincrement())
+  name      String
+  phone     String    @unique
+  email     String?
+  address   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  invoices  Invoice[]
+
+  @@map("invoice_customers")
+}
+
+model InvoiceService {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  rate      Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("invoice_services")
+}
+
+model Invoice {
+  id                 Int           @id @default(autoincrement())
+  invoiceNumber      String        @unique
+  date               DateTime      @default(now())
+  customerId         Int?
+  customer           Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName       String
+  customerPhone      String
+  customerEmail      String?
+  customerAddress    String
+  items              InvoiceItem[]
+  totalAmount        Float         @default(0)
+  totalPayableAmount Float         @default(0)
+  paidAmount         Float         @default(0)
+  dueAmount          Float         @default(0)
+  paymentStatus      String        @default("Due")
+  amountInWords      String
+  templateName       String        @default("template1")
+  accountName        String?       @default("RAJSEBA.COM")
+  accountNumber      String?       @default("02433002451")
+  bankName           String?       @default("Bank Asia PLC")
+  branch             String?       @default("Rajshahi Branch")
+  routingNumber      String?       @default("070811937")
+  signeeName         String?       @default("Ariful Islam Arif")
+  signeeRole         String?       @default("CEO, Rajseba Design Studio")
+  status             String        @default("active")
+  deletedAt          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          Int      @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  qty         Float    @default(1)
+  rate        Float    @default(0)
+  amount      Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("invoice_items")
+}
