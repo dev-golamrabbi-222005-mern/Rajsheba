@@ -4,6 +4,18 @@ import morgan from 'morgan';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { sendResponse } from './utils/response.js';
 
+import authRoutes from './modules/auth/auth.routes.js';
+import userRoutes from './modules/users/user.routes.js';
+import categoryRoutes from './modules/categories/category.routes.js';
+import serviceRoutes from './modules/services/service.routes.js';
+import bookingRoutes from './modules/bookings/booking.routes.js';
+import brandingRoutes from './modules/branding/branding.routes.js';
+import locationRoutes from './modules/locations/location.routes.js';
+import couponRoutes from './modules/coupons/coupon.routes.js';
+import reviewRoutes from './modules/reviews/review.routes.js';
+import withdrawRoutes from './modules/withdraw/withdraw.routes.js';
+import chatRoutes from './modules/chat/chat.routes.js';
+
 export const createApp = () => {
   const app = express();
 
@@ -41,6 +53,31 @@ export const createApp = () => {
       },
     });
   });
+
+  // REST API Routes
+  app.use('/auth', authRoutes);
+  app.use('/users', userRoutes);
+  app.use('/categories', categoryRoutes);
+  app.use('/services', serviceRoutes);
+  app.use('/bookings', bookingRoutes);
+  app.use('/company-branding', brandingRoutes);
+  app.use('/locations', locationRoutes);
+  app.use('/devisions', (req, res, next) => {
+    req.url = '/devisions';
+    locationRoutes(req, res, next);
+  });
+  app.use('/districts', (req, res, next) => {
+    req.url = '/districts';
+    locationRoutes(req, res, next);
+  });
+  app.use('/areas', (req, res, next) => {
+    req.url = '/areas';
+    locationRoutes(req, res, next);
+  });
+  app.use('/coupons', couponRoutes);
+  app.use('/reviews', reviewRoutes);
+  app.use('/withdraw', withdrawRoutes);
+  app.use('/chat', chatRoutes);
 
   // Global error handler
   app.use(errorHandler);

@@ -2,9 +2,13 @@ import http from 'http';
 import { createApp } from './app.js';
 import { ENV } from './config/env.js';
 import { prisma } from './config/prisma.js';
+import { setupSocketIO } from './socket.js';
 
 const app = createApp();
 const server = http.createServer(app);
+
+// Setup Socket.IO Gateway
+setupSocketIO(server);
 
 const startServer = async () => {
   try {
